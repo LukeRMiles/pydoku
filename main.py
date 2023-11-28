@@ -1,76 +1,63 @@
-from time import sleep
+## Prints the board row by row
 def printBoard(board):
     for row in board:
         for num in row:
             print(num, end = " ")
         print()
 
-def checkValid(board, square):
-    ## Board in form [[]x9], square is tuple coordinates
-    ## Returns True if square is valid, false if square in invalid
-    squareRow, squareCol = square
-    valueToCheck = board[squareRow][squareCol]
-    ## Check row
-    if (board[squareRow].count(valueToCheck) > 1):
-        ## Check to see if there are more than 1 of that value on the row
+## Checks if value is valid at position on board. Returns True if valid, False if invalid.
+def checkValid(board, position, value):
+    squareRow, squareCol = position
+
+    # To check the row
+    if board[squareRow].count(value) > 0:
         return False
-    ## Check col
-    for i, row in enumerate(board):
-        if (row[squareCol] == valueToCheck) and (i != squareRow):
-            ## If squares have same value and is not the square we're checking
+
+    # To check the col
+    for row in board:
+        if row[squareCol] == value:
             return False
-    ## Check square
-    startingRow = (squareRow // 3) * 3
-    startingCol = (squareCol // 3) * 3
-    vals = []
-    for row in board[startingRow:startingRow + 3]:
-        for value in row[startingCol:startingCol + 3]:
-            ## Get all the values in the square and add them to an array
-            vals.append(value)
-    if vals.count(valueToCheck) > 1:
-        ## Check to see if the value appears more than once
-        ## If it does, the value is invalid and return False
-        ## Otherwise, return true
-        return False
-    return True ## End condition
+    
+    # To check the box
+    boxRow = (squareRow // 3) * 3
+    boxCol = (squareCol // 3) * 3
+    for row in board[boxRow : boxRow + 3]:
+        for number in row[boxCol : boxCol + 3]:
+            if number == value:
+                return False
 
+    return True
+
+## Returns the (x, y) coordinates of the next 0 in the board. If none found, returns False.
+def getNextEmpty(board):
+    for x, row in enumerate(board):
+        for y, value in enumerate(row):
+            if value == 0:
+                return x, y
+    return False
+
+## Recursively fills all 0's in the board with valid numbers.
+## Returns the completed the board when solved, or False if board cannot be solved.
 def solve(board):
-    ## Returns a board ([[]x9]) if successful, false if not
-    def getNextEmpty():
-        for x, row in enumerate(board):
-            for y, value in enumerate(row):
-                if value == 0:
-                    return x, y
-        return False
-
-    squareToFill = getNextEmpty()
+    squareToFill = getNextEmpty(board)
     if squareToFill: ## Board is incomplete
         x, y = squareToFill
+        ##TODO: Change to pass by value
+        newBoard = [*board]
+
         for i in range(1, 10):
-            ## TODO: Change the checkValid() call to checkValid(newBoard, i) to
-            ## reduce the number of unnecessary changes (putting a 5 next to a 5)
-            sleep(0.01)
-            newBoard = [*board] ## To avoid pass by reference
-            newBoard[x][y] = i
-            printBoard(newBoard)
-            print("\n")
-            if checkValid(newBoard, squareToFill):
-                ## If value is valid, go to the next zero
+            if checkValid(newBoard, squareToFill, i):
+                newBoard[x][y] = i
                 nextWorked = solve(newBoard)
-                if nextWorked == False:
-                    ## Next value didn't find anything
-                    continue ## to next number
+                if not nextWorked: ## Check to see if the next step is possible
+                    continue
                 else:
-                    ## Next value found something, solved?
                     return newBoard
             else:
-                ## If value is invalid, try the next value
-                continue ## to next number
-        ## All the values are invalid
-        board[x][y] = 0
+                continue
+        newBoard[x][y] = 0 ## If none of the options worked, go back to the last recursive layer
         return False
     else:
-        ## Board is complete
         return board
 
 if __name__ == '__main__':
@@ -94,4 +81,5 @@ if __name__ == '__main__':
                [0, 9, 0, 7, 0, 2, 0, 5, 0],
                [0, 1, 0, 0, 0, 0, 0, 0, 3]]
 
-    solved = solve(medBoard)
+    solved = solve(easyBoard)
+    printBoard(solved)
